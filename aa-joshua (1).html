@@ -1,0 +1,668 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>A.A. Joshua — Afro Luxury Fashion</title>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Cinzel:wght@400;600&family=Jost:wght@300;400;500&display=swap" rel="stylesheet"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+  :root {
+    --black:#0a0a0a; --black2:#111111; --black3:#1a1a1a;
+    --gold:#c9a84c; --gold-light:#e2c074; --gold-dim:#7a6030;
+    --white:#f5f0e8; --white-dim:#a89f90;
+    --border:rgba(201,168,76,0.2); --radius:4px;
+  }
+  *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{background:var(--black);color:var(--white);font-family:'Jost',sans-serif;font-weight:300;min-height:100vh;overflow-x:hidden;}
+  body::before{content:'';position:fixed;inset:0;z-index:0;pointer-events:none;
+    background-image:url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' stroke='%23c9a84c' stroke-width='0.3' opacity='0.07'%3E%3Crect x='15' y='15' width='30' height='30'/%3E%3Ccircle cx='30' cy='30' r='10'/%3E%3Cline x1='30' y1='0' x2='30' y2='60'/%3E%3Cline x1='0' y1='30' x2='60' y2='30'/%3E%3C/g%3E%3C/svg%3E");}
+  #app{position:relative;z-index:1;max-width:420px;margin:0 auto;min-height:100vh;display:flex;flex-direction:column;}
+  .screen{display:none;flex-direction:column;flex:1;animation:fadeIn .35s ease;}
+  .screen.active{display:flex;}
+  @keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+  .header{padding:20px 20px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;justify-content:space-between;background:rgba(10,10,10,0.95);backdrop-filter:blur(10px);position:sticky;top:0;z-index:100;}
+  .logo{font-family:'Cinzel',serif;font-size:18px;letter-spacing:.15em;color:var(--gold);line-height:1;}
+  .logo span{font-size:9px;display:block;letter-spacing:.35em;color:var(--white-dim);margin-top:2px;}
+  .header-actions{display:flex;gap:12px;align-items:center;}
+  .icon-btn{background:none;border:none;cursor:pointer;color:var(--white-dim);font-size:18px;padding:4px;transition:color .2s;}
+  .icon-btn:hover{color:var(--gold);}
+  .avatar-mini{width:30px;height:30px;border-radius:50%;border:1.5px solid var(--gold);cursor:pointer;background:var(--black3);display:flex;align-items:center;justify-content:center;font-size:12px;color:var(--gold);font-family:'Cinzel',serif;overflow:hidden;}
+  .search-wrap{padding:14px 20px 0;background:var(--black);}
+  .search-row{display:flex;gap:8px;}
+  .search-input{flex:1;background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:11px 14px;color:var(--white);font-family:'Jost',sans-serif;font-size:14px;outline:none;transition:border-color .2s;}
+  .search-input::placeholder{color:var(--white-dim);}
+  .search-input:focus{border-color:var(--gold-dim);}
+  .filter-btn{background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:0 14px;color:var(--gold);cursor:pointer;font-size:16px;transition:background .2s;display:flex;align-items:center;gap:6px;}
+  .filter-btn span{font-size:11px;font-family:'Jost';letter-spacing:.1em;color:var(--white-dim);}
+  .chips{display:flex;gap:8px;padding:12px 20px;overflow-x:auto;scrollbar-width:none;}
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{white-space:nowrap;padding:6px 14px;border-radius:20px;border:1px solid var(--border);font-size:12px;letter-spacing:.08em;cursor:pointer;transition:all .2s;color:var(--white-dim);background:transparent;}
+  .chip.active{background:var(--gold);color:var(--black);border-color:var(--gold);font-weight:500;}
+  .chip:hover:not(.active){border-color:var(--gold-dim);color:var(--white);}
+  .sort-label{padding:0 20px 10px;font-size:11px;letter-spacing:.15em;color:var(--white-dim);text-transform:uppercase;}
+  .feed{padding:0 20px 100px;display:flex;flex-direction:column;gap:14px;}
+  .card{background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;cursor:pointer;transition:border-color .25s,transform .2s;display:flex;}
+  .card:hover{border-color:var(--gold-dim);transform:translateY(-1px);}
+  .card:active{transform:scale(.98);}
+  .card-img{width:110px;flex-shrink:0;background:var(--black2);position:relative;overflow:hidden;}
+  .card-img .placeholder-art{width:100%;height:100%;min-height:130px;display:flex;align-items:center;justify-content:center;font-size:36px;background:linear-gradient(135deg,#1a1508 0%,#0d0d0d 100%);}
+  .card-badge{position:absolute;top:8px;left:8px;background:var(--gold);color:var(--black);font-size:9px;letter-spacing:.1em;padding:3px 6px;font-family:'Cinzel';font-weight:600;}
+  .card-body{padding:14px;flex:1;display:flex;flex-direction:column;justify-content:space-between;}
+  .card-brand{font-family:'Cinzel',serif;font-size:11px;letter-spacing:.15em;color:var(--gold);margin-bottom:4px;}
+  .card-name{font-family:'Cormorant Garamond',serif;font-size:17px;font-weight:300;line-height:1.2;margin-bottom:6px;}
+  .card-price{font-size:15px;font-weight:500;color:var(--gold-light);margin-bottom:8px;}
+  .card-meta{display:flex;align-items:center;justify-content:space-between;}
+  .stars{color:var(--gold);font-size:12px;letter-spacing:1px;}
+  .stars span{color:var(--white-dim);font-size:11px;margin-left:4px;}
+  .card-loc{font-size:11px;color:var(--white-dim);letter-spacing:.05em;}
+  .detail-header{padding:16px 20px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--border);background:rgba(10,10,10,.95);position:sticky;top:0;z-index:50;}
+  .back-btn{background:none;border:none;color:var(--gold);cursor:pointer;font-size:20px;}
+  .detail-title{font-family:'Cinzel';font-size:13px;letter-spacing:.15em;color:var(--white);}
+  .detail-img{width:100%;aspect-ratio:4/3;background:linear-gradient(135deg,#1a1508,#0d0d0d);display:flex;align-items:center;justify-content:center;font-size:80px;}
+  .detail-body{padding:20px;}
+  .detail-brand{font-family:'Cinzel';font-size:11px;letter-spacing:.2em;color:var(--gold);margin-bottom:6px;}
+  .detail-name{font-family:'Cormorant Garamond';font-size:28px;font-weight:300;line-height:1.1;margin-bottom:12px;}
+  .detail-price{font-size:22px;font-weight:500;color:var(--gold-light);margin-bottom:16px;}
+  .detail-divider{height:1px;background:var(--border);margin:16px 0;}
+  .rating-section h3,.location-section h3,.add-review-section h3{font-size:11px;letter-spacing:.2em;color:var(--white-dim);text-transform:uppercase;margin-bottom:12px;}
+  .big-stars{font-size:24px;color:var(--gold);letter-spacing:4px;}
+  .rating-count{font-size:13px;color:var(--white-dim);margin-top:4px;}
+  .reviews{margin-top:16px;display:flex;flex-direction:column;gap:12px;}
+  .review-card{background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;}
+  .review-top{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;}
+  .reviewer{font-size:12px;font-weight:500;color:var(--white);}
+  .review-stars{font-size:11px;color:var(--gold);}
+  .review-text{font-size:13px;color:var(--white-dim);line-height:1.6;}
+  .location-section{margin-top:16px;}
+  .location-box{background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:14px;display:flex;align-items:center;justify-content:space-between;}
+  .location-text{font-size:13px;color:var(--white);line-height:1.6;}
+  .maps-btn{background:var(--gold);color:var(--black);border:none;border-radius:var(--radius);padding:8px 14px;font-size:11px;letter-spacing:.1em;cursor:pointer;font-family:'Cinzel';white-space:nowrap;margin-left:12px;transition:background .2s;}
+  .maps-btn:hover{background:var(--gold-light);}
+  .add-review-section{margin-top:16px;padding-bottom:30px;}
+  .star-picker{display:flex;gap:8px;margin-bottom:12px;}
+  .star-pick{font-size:26px;color:var(--black3);cursor:pointer;transition:color .15s;}
+  .star-pick.lit{color:var(--gold);}
+  .review-input{width:100%;background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;color:var(--white);font-family:'Jost';font-size:14px;resize:none;outline:none;transition:border-color .2s;margin-bottom:10px;}
+  .review-input:focus{border-color:var(--gold-dim);}
+  .review-input::placeholder{color:var(--white-dim);}
+  .submit-review{width:100%;padding:13px;background:transparent;border:1px solid var(--gold);color:var(--gold);font-family:'Cinzel';font-size:11px;letter-spacing:.2em;cursor:pointer;border-radius:var(--radius);transition:all .2s;}
+  .submit-review:hover{background:var(--gold);color:var(--black);}
+  .submit-review:disabled{opacity:.5;cursor:not-allowed;}
+  .auth-wrap{flex:1;display:flex;flex-direction:column;padding:40px 24px 60px;justify-content:center;}
+  .auth-logo{text-align:center;margin-bottom:36px;}
+  .auth-logo .big{font-family:'Cinzel';font-size:28px;letter-spacing:.2em;color:var(--gold);}
+  .auth-logo .sub{font-size:11px;letter-spacing:.35em;color:var(--white-dim);margin-top:4px;}
+  .auth-tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:24px;}
+  .auth-tab{flex:1;padding:12px;text-align:center;font-size:11px;letter-spacing:.2em;text-transform:uppercase;cursor:pointer;color:var(--white-dim);border-bottom:2px solid transparent;margin-bottom:-1px;transition:all .2s;}
+  .auth-tab.active{color:var(--gold);border-color:var(--gold);}
+  .auth-form{display:none;flex-direction:column;gap:14px;}
+  .auth-form.active{display:flex;}
+  .form-group{display:flex;flex-direction:column;gap:6px;}
+  .form-group label{font-size:11px;letter-spacing:.15em;color:var(--white-dim);text-transform:uppercase;}
+  .form-input{background:var(--black3);border:1px solid var(--border);border-radius:var(--radius);padding:13px 14px;color:var(--white);font-family:'Jost';font-size:14px;outline:none;transition:border-color .2s;width:100%;}
+  .form-input:focus{border-color:var(--gold-dim);}
+  .form-input::placeholder{color:#444;}
+  .auth-btn{padding:15px;background:var(--gold);color:var(--black);border:none;border-radius:var(--radius);font-family:'Cinzel';font-size:12px;letter-spacing:.25em;cursor:pointer;margin-top:4px;transition:background .2s;}
+  .auth-btn:hover{background:var(--gold-light);}
+  .auth-btn:disabled{opacity:.5;cursor:not-allowed;}
+  .auth-note{text-align:center;font-size:12px;color:var(--white-dim);margin-top:8px;}
+  .profile-header{padding:30px 20px 20px;text-align:center;border-bottom:1px solid var(--border);}
+  .profile-avatar{width:80px;height:80px;border-radius:50%;border:2px solid var(--gold);margin:0 auto 12px;background:var(--black3);display:flex;align-items:center;justify-content:center;font-size:32px;color:var(--gold);font-family:'Cinzel';}
+  .profile-name{font-family:'Cinzel';font-size:16px;letter-spacing:.15em;color:var(--white);}
+  .profile-username{font-size:12px;color:var(--gold);margin-top:4px;letter-spacing:.1em;}
+  .profile-about{font-size:13px;color:var(--white-dim);margin-top:10px;line-height:1.6;padding:0 20px;}
+  .profile-stats{display:flex;border-bottom:1px solid var(--border);}
+  .pstat{flex:1;padding:16px;text-align:center;border-right:1px solid var(--border);}
+  .pstat:last-child{border-right:none;}
+  .pstat .num{font-family:'Cinzel';font-size:18px;color:var(--gold);}
+  .pstat .lbl{font-size:10px;letter-spacing:.12em;color:var(--white-dim);text-transform:uppercase;margin-top:2px;}
+  .profile-menu{padding:10px 0 20px;}
+  .menu-item{padding:16px 20px;display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid var(--border);cursor:pointer;transition:background .2s;}
+  .menu-item:hover{background:var(--black3);}
+  .menu-item span{font-size:14px;color:var(--white);}
+  .menu-item .arrow{color:var(--gold);font-size:14px;}
+  .logout-btn{margin:20px;padding:14px;background:transparent;border:1px solid rgba(255,80,80,.3);color:#ff6060;font-family:'Cinzel';font-size:11px;letter-spacing:.2em;cursor:pointer;border-radius:var(--radius);width:calc(100% - 40px);transition:all .2s;}
+  .logout-btn:hover{background:rgba(255,80,80,.1);}
+  .add-wrap{flex:1;overflow-y:auto;padding:20px 20px 100px;}
+  .add-title{font-family:'Cinzel';font-size:14px;letter-spacing:.2em;color:var(--gold);margin-bottom:20px;}
+  .bottom-nav{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:rgba(10,10,10,.97);border-top:1px solid var(--border);display:flex;padding:10px 0 20px;backdrop-filter:blur(10px);z-index:150;}
+  .nav-item{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 0;transition:color .2s;color:var(--white-dim);}
+  .nav-item.active{color:var(--gold);}
+  .nav-item:hover{color:var(--white);}
+  .nav-icon{font-size:20px;}
+  .nav-label{font-size:9px;letter-spacing:.1em;text-transform:uppercase;}
+  .drawer-overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.7);backdrop-filter:blur(4px);}
+  .drawer-overlay.open{display:block;}
+  .drawer{position:absolute;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:420px;background:var(--black2);border-top:1px solid var(--border);border-radius:16px 16px 0 0;padding:20px 20px 40px;animation:slideUp .3s ease;}
+  @keyframes slideUp{from{transform:translateX(-50%) translateY(100%)}to{transform:translateX(-50%) translateY(0)}}
+  .drawer-handle{width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 20px;}
+  .drawer-title{font-family:'Cinzel';font-size:13px;letter-spacing:.2em;color:var(--gold);margin-bottom:20px;}
+  .filter-section{margin-bottom:20px;}
+  .filter-section label{font-size:11px;letter-spacing:.15em;color:var(--white-dim);text-transform:uppercase;display:block;margin-bottom:10px;}
+  .range-row{display:flex;align-items:center;gap:10px;}
+  .range-input{flex:1;accent-color:var(--gold);}
+  .range-val{font-size:13px;color:var(--gold);min-width:60px;text-align:right;}
+  .filter-chips{display:flex;flex-wrap:wrap;gap:8px;}
+  .apply-btn{width:100%;padding:14px;background:var(--gold);color:var(--black);border:none;border-radius:var(--radius);font-family:'Cinzel';font-size:12px;letter-spacing:.2em;cursor:pointer;margin-top:10px;transition:background .2s;}
+  .apply-btn:hover{background:var(--gold-light);}
+  .loading-wrap{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;gap:16px;}
+  .spinner{width:32px;height:32px;border:2px solid var(--border);border-top-color:var(--gold);border-radius:50%;animation:spin .8s linear infinite;}
+  @keyframes spin{to{transform:rotate(360deg)}}
+  .loading-text{font-family:'Cinzel';font-size:11px;letter-spacing:.2em;color:var(--white-dim);}
+  .gate-banner{margin:16px 20px;padding:14px 16px;background:var(--black3);border:1px solid var(--gold-dim);border-radius:var(--radius);display:flex;align-items:center;gap:12px;cursor:pointer;}
+  .gate-banner p{font-size:13px;color:var(--white-dim);flex:1;}
+  .gate-banner .cta{font-size:11px;letter-spacing:.12em;color:var(--gold);font-family:'Cinzel';white-space:nowrap;}
+  .toast{position:fixed;bottom:90px;left:50%;transform:translateX(-50%) translateY(20px);background:var(--gold);color:var(--black);font-family:'Cinzel';font-size:11px;letter-spacing:.1em;padding:10px 20px;border-radius:20px;opacity:0;transition:all .3s;z-index:500;white-space:nowrap;}
+  .toast.show{opacity:1;transform:translateX(-50%) translateY(0);}
+  ::-webkit-scrollbar{width:3px;}
+  ::-webkit-scrollbar-track{background:var(--black);}
+  ::-webkit-scrollbar-thumb{background:var(--gold-dim);border-radius:2px;}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HOME -->
+  <div class="screen active" id="screen-home">
+    <div class="header">
+      <div class="logo">A.A. JOSHUA<span>AFRO LUXURY FASHION</span></div>
+      <div class="header-actions">
+        <div class="avatar-mini" id="header-avatar" onclick="goProfile()">?</div>
+      </div>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:80px;">
+      <div class="search-wrap">
+        <div class="search-row">
+          <input class="search-input" type="text" placeholder="Search brands, items, locations…" id="search-input" oninput="filterFeed()"/>
+          <button class="filter-btn" onclick="openDrawer()">⚙ <span>Filter</span></button>
+        </div>
+      </div>
+      <div class="chips" id="brand-chips">
+        <div class="chip active" onclick="filterChip(this,'all')">All</div>
+        <div class="chip" onclick="filterChip(this,'Lagos')">Lagos</div>
+        <div class="chip" onclick="filterChip(this,'Abuja')">Abuja</div>
+        <div class="chip" onclick="filterChip(this,'Kente')">Kente</div>
+        <div class="chip" onclick="filterChip(this,'Ankara')">Ankara</div>
+        <div class="chip" onclick="filterChip(this,'Aso-oke')">Aso-oke</div>
+        <div class="chip" onclick="filterChip(this,'top')">⭐ Top Rated</div>
+      </div>
+      <div class="sort-label">Sorted by price: lowest first</div>
+      <div class="gate-banner" id="gate-banner" onclick="showScreen('auth')" style="display:none">
+        <p>Sign in to add products, leave reviews & save favourites.</p>
+        <span class="cta">JOIN →</span>
+      </div>
+      <div class="feed" id="feed">
+        <div class="loading-wrap"><div class="spinner"></div><div class="loading-text">LOADING COLLECTION</div></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- DETAIL -->
+  <div class="screen" id="screen-detail">
+    <div class="detail-header">
+      <button class="back-btn" onclick="goBack()">←</button>
+      <span class="detail-title" id="detail-header-title">PRODUCT</span>
+    </div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:80px;" id="detail-scroll">
+      <div class="detail-img" id="detail-img-wrap"><span id="detail-emoji">👗</span></div>
+      <div class="detail-body">
+        <div class="detail-brand" id="detail-brand"></div>
+        <div class="detail-name" id="detail-name"></div>
+        <div class="detail-price" id="detail-price"></div>
+        <div class="detail-divider"></div>
+        <div class="rating-section">
+          <h3>Customer Ratings</h3>
+          <div class="big-stars" id="detail-stars"></div>
+          <div class="rating-count" id="detail-rating-count"></div>
+          <div class="reviews" id="detail-reviews"></div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="location-section">
+          <h3>Where to Find It</h3>
+          <div class="location-box">
+            <div class="location-text" id="detail-location"></div>
+            <button class="maps-btn" onclick="openMaps()">📍 Maps</button>
+          </div>
+        </div>
+        <div class="detail-divider"></div>
+        <div class="add-review-section" id="review-form-section">
+          <h3>Leave a Review</h3>
+          <div class="star-picker" id="star-picker">
+            <span class="star-pick" onclick="pickStar(1)">★</span>
+            <span class="star-pick" onclick="pickStar(2)">★</span>
+            <span class="star-pick" onclick="pickStar(3)">★</span>
+            <span class="star-pick" onclick="pickStar(4)">★</span>
+            <span class="star-pick" onclick="pickStar(5)">★</span>
+          </div>
+          <textarea class="review-input" rows="3" placeholder="Share your experience…" id="review-text"></textarea>
+          <button class="submit-review" id="submit-review-btn" onclick="submitReview()">SUBMIT REVIEW</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AUTH -->
+  <div class="screen" id="screen-auth">
+    <div class="header">
+      <div class="logo">A.A. JOSHUA<span>AFRO LUXURY FASHION</span></div>
+      <button class="icon-btn" onclick="showScreen('home')">✕</button>
+    </div>
+    <div class="auth-wrap">
+      <div class="auth-logo">
+        <div class="big">A.A. JOSHUA</div>
+        <div class="sub">AFRO LUXURY FASHION</div>
+      </div>
+      <div class="auth-tabs">
+        <div class="auth-tab active" id="tab-login" onclick="switchTab('login')">Sign In</div>
+        <div class="auth-tab" id="tab-register" onclick="switchTab('register')">Register</div>
+      </div>
+      <div class="auth-form active" id="form-login">
+        <div class="form-group"><label>Email</label><input class="form-input" type="email" placeholder="your@email.com" id="login-email"/></div>
+        <div class="form-group"><label>Password</label><input class="form-input" type="password" placeholder="••••••••" id="login-password"/></div>
+        <button class="auth-btn" id="login-btn" onclick="doLogin()">ENTER THE COLLECTION</button>
+        <p class="auth-note">New here? <span style="color:var(--gold);cursor:pointer" onclick="switchTab('register')">Create an account →</span></p>
+      </div>
+      <div class="auth-form" id="form-register">
+        <div class="form-group"><label>Full Name</label><input class="form-input" type="text" placeholder="Amara Joshua" id="reg-name"/></div>
+        <div class="form-group"><label>Username</label><input class="form-input" type="text" placeholder="@amarastyle" id="reg-username"/></div>
+        <div class="form-group"><label>Email</label><input class="form-input" type="email" placeholder="your@email.com" id="reg-email"/></div>
+        <div class="form-group"><label>Password</label><input class="form-input" type="password" placeholder="Min 6 characters" id="reg-password"/></div>
+        <div class="form-group"><label>About Me</label><input class="form-input" type="text" placeholder="Afro luxury enthusiast…" id="reg-about"/></div>
+        <button class="auth-btn" id="register-btn" onclick="doRegister()">JOIN THE COMMUNITY</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- ADD PRODUCT -->
+  <div class="screen" id="screen-add">
+    <div class="header"><div class="logo">A.A. JOSHUA<span>ADD PRODUCT</span></div></div>
+    <div class="add-wrap">
+      <div class="add-title">SUBMIT A FASHION FIND</div>
+      <div style="display:flex;flex-direction:column;gap:14px;">
+        <div class="form-group"><label>Brand Name</label><input class="form-input" type="text" placeholder="e.g. Deola Sagoe" id="add-brand"/></div>
+        <div class="form-group"><label>Product Name</label><input class="form-input" type="text" placeholder="e.g. Kente Wrap Gown" id="add-product"/></div>
+        <div class="form-group"><label>Price (₦)</label><input class="form-input" type="number" placeholder="25000" id="add-price"/></div>
+        <div class="form-group"><label>Style Category</label>
+          <select class="form-input" id="add-category" style="appearance:none;">
+            <option>Ankara</option><option>Kente</option><option>Aso-oke</option>
+            <option>Adire</option><option>Ready-to-wear</option><option>Couture</option>
+          </select>
+        </div>
+        <div class="form-group"><label>City</label><input class="form-input" type="text" placeholder="e.g. Lagos" id="add-city"/></div>
+        <div class="form-group"><label>Full Address / Directions</label><input class="form-input" type="text" placeholder="e.g. 12 Akin Adesola St, VI" id="add-location"/></div>
+        <div class="form-group"><label>Google Maps Link (optional)</label><input class="form-input" type="url" placeholder="https://maps.google.com/..." id="add-maps"/></div>
+        <button class="auth-btn" id="add-submit-btn" onclick="submitProduct()">SUBMIT TO COLLECTION</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- PROFILE -->
+  <div class="screen" id="screen-profile">
+    <div class="header"><div class="logo">A.A. JOSHUA<span>MY PROFILE</span></div></div>
+    <div style="overflow-y:auto;flex:1;padding-bottom:80px;">
+      <div class="profile-header">
+        <div class="profile-avatar" id="profile-avatar-icon">?</div>
+        <div class="profile-name" id="profile-name-display">Guest</div>
+        <div class="profile-username" id="profile-username-display">Sign in to access your profile</div>
+        <div class="profile-about" id="profile-about-display"></div>
+      </div>
+      <div class="profile-stats">
+        <div class="pstat"><div class="num" id="pstat-added">0</div><div class="lbl">Added</div></div>
+        <div class="pstat"><div class="num" id="pstat-reviews">0</div><div class="lbl">Reviews</div></div>
+        <div class="pstat"><div class="num" id="pstat-rating">—</div><div class="lbl">Avg Stars</div></div>
+      </div>
+      <div class="profile-menu">
+        <div class="menu-item" onclick="showToast('Favourites coming soon')"><span>♡ My Favourites</span><span class="arrow">›</span></div>
+        <div class="menu-item" onclick="showToast('Your submissions will appear here')"><span>🛍 My Submissions</span><span class="arrow">›</span></div>
+        <div class="menu-item" onclick="showToast('Settings coming soon')"><span>⚙ Settings</span><span class="arrow">›</span></div>
+      </div>
+      <button class="logout-btn" id="logout-btn" onclick="doLogout()" style="display:none">SIGN OUT</button>
+      <button class="auth-btn" id="signin-profile-btn" onclick="showScreen('auth')" style="margin:20px;width:calc(100% - 40px)">SIGN IN / REGISTER</button>
+    </div>
+  </div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" id="nav-home" onclick="showScreen('home')"><div class="nav-icon">🏠</div><div class="nav-label">Discover</div></div>
+    <div class="nav-item" id="nav-search" onclick="showScreen('home');setTimeout(()=>document.getElementById('search-input').focus(),100)"><div class="nav-icon">🔍</div><div class="nav-label">Search</div></div>
+    <div class="nav-item" id="nav-add" onclick="goAdd()"><div class="nav-icon">＋</div><div class="nav-label">Add</div></div>
+    <div class="nav-item" id="nav-profile" onclick="goProfile()"><div class="nav-icon">👤</div><div class="nav-label">Profile</div></div>
+  </div>
+
+  <!-- FILTER DRAWER -->
+  <div class="drawer-overlay" id="drawer-overlay" onclick="closeDrawer()">
+    <div class="drawer" onclick="event.stopPropagation()">
+      <div class="drawer-handle"></div>
+      <div class="drawer-title">FILTER COLLECTION</div>
+      <div class="filter-section">
+        <label>Max Price (₦)</label>
+        <div class="range-row">
+          <input type="range" class="range-input" min="5000" max="500000" step="5000" value="500000" id="price-range" oninput="document.getElementById('price-label').textContent='₦'+parseInt(this.value).toLocaleString()"/>
+          <span class="range-val" id="price-label">₦500,000</span>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label>Min Rating</label>
+        <div class="filter-chips" id="rating-chips">
+          <div class="chip active" onclick="setChipGroup(this,'rating-chips');filters.minRating=0">All</div>
+          <div class="chip" onclick="setChipGroup(this,'rating-chips');filters.minRating=3">3★+</div>
+          <div class="chip" onclick="setChipGroup(this,'rating-chips');filters.minRating=4">4★+</div>
+          <div class="chip" onclick="setChipGroup(this,'rating-chips');filters.minRating=4.5">4.5★+</div>
+        </div>
+      </div>
+      <div class="filter-section">
+        <label>Style</label>
+        <div class="filter-chips" id="style-chips">
+          <div class="chip active" onclick="setChipGroup(this,'style-chips');filters.style='all'">All</div>
+          <div class="chip" onclick="setChipGroup(this,'style-chips');filters.style='Ankara'">Ankara</div>
+          <div class="chip" onclick="setChipGroup(this,'style-chips');filters.style='Kente'">Kente</div>
+          <div class="chip" onclick="setChipGroup(this,'style-chips');filters.style='Aso-oke'">Aso-oke</div>
+          <div class="chip" onclick="setChipGroup(this,'style-chips');filters.style='Adire'">Adire</div>
+          <div class="chip" onclick="setChipGroup(this,'style-chips');filters.style='Couture'">Couture</div>
+        </div>
+      </div>
+      <button class="apply-btn" onclick="applyFilters()">APPLY FILTERS</button>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+</div>
+
+<script>
+const SUPA_URL='https://wbkaamtkbxmwcucxzhlj.supabase.co';
+const SUPA_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6India2FhbXRrYnhtd2N1Y3h6aGxqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ5NDgzNzIsImV4cCI6MjA5MDUyNDM3Mn0.6PV4QQjipI_Td1BHbIvuFe_72fWdaLo1SnQTKVFN_ic';
+const sb=supabase.createClient(SUPA_URL,SUPA_KEY);
+
+let currentUser=null,currentProfile=null,allProducts=[],currentProductId=null,currentMapsLink='',selectedStar=0;
+let filters={maxPrice:500000,minRating:0,style:'all',search:'',chip:'all'};
+
+function starsHTML(r){if(!r||r===0)return'☆☆☆☆☆';let s='';for(let i=1;i<=5;i++)s+=i<=Math.round(r)?'★':'☆';return s;}
+function fmt(n){return'₦'+Number(n).toLocaleString();}
+
+let toastTimer;
+function showToast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');clearTimeout(toastTimer);toastTimer=setTimeout(()=>t.classList.remove('show'),2800);}
+
+function showScreen(name){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById('screen-'+name).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active'));
+  const map={home:'nav-home',add:'nav-add',profile:'nav-profile'};
+  if(map[name])document.getElementById(map[name]).classList.add('active');
+}
+function goBack(){showScreen('home');}
+function goAdd(){if(!currentUser){showToast('Sign in to add a product');showScreen('auth');return;}showScreen('add');}
+function goProfile(){refreshProfileUI();showScreen('profile');}
+
+// AUTH
+function switchTab(t){
+  ['login','register'].forEach(x=>{
+    document.getElementById('tab-'+x).classList.toggle('active',x===t);
+    document.getElementById('form-'+x).classList.toggle('active',x===t);
+  });
+}
+
+async function doLogin(){
+  const email=document.getElementById('login-email').value.trim();
+  const pw=document.getElementById('login-password').value;
+  if(!email||!pw){showToast('Please fill in all fields');return;}
+  const btn=document.getElementById('login-btn');
+  btn.disabled=true;btn.textContent='SIGNING IN…';
+  const{error}=await sb.auth.signInWithPassword({email,password:pw});
+  btn.disabled=false;btn.textContent='ENTER THE COLLECTION';
+  if(error){showToast(error.message);return;}
+  showToast('Welcome back ✨');
+  showScreen('home');
+}
+
+async function doRegister(){
+  const name=document.getElementById('reg-name').value.trim();
+  const username=document.getElementById('reg-username').value.trim().replace(/^@/,'');
+  const email=document.getElementById('reg-email').value.trim();
+  const pw=document.getElementById('reg-password').value;
+  const about=document.getElementById('reg-about').value.trim();
+  if(!name||!username||!email||!pw){showToast('Please fill in all required fields');return;}
+  if(pw.length<6){showToast('Password must be at least 6 characters');return;}
+  const btn=document.getElementById('register-btn');
+  btn.disabled=true;btn.textContent='CREATING ACCOUNT…';
+  const{data,error}=await sb.auth.signUp({email,password:pw});
+  if(error){btn.disabled=false;btn.textContent='JOIN THE COMMUNITY';showToast(error.message);return;}
+  const{error:pe}=await sb.from('profiles').upsert({id:data.user.id,name,username:'@'+username,about});
+  btn.disabled=false;btn.textContent='JOIN THE COMMUNITY';
+  if(pe){showToast(pe.message);return;}
+  showToast('Welcome, '+name.split(' ')[0]+' ✨');
+  showScreen('home');
+}
+
+async function doLogout(){
+  await sb.auth.signOut();
+  currentUser=null;currentProfile=null;
+  refreshProfileUI();refreshHeaderAvatar();
+  document.getElementById('gate-banner').style.display='flex';
+  showToast('You\'ve been signed out');
+  showScreen('home');
+}
+
+async function loadProfile(userId){
+  const{data}=await sb.from('profiles').select('*').eq('id',userId).single();
+  currentProfile=data;
+  refreshProfileUI();refreshHeaderAvatar();
+}
+
+function refreshHeaderAvatar(){
+  const el=document.getElementById('header-avatar');
+  el.textContent=currentProfile&&currentProfile.name?currentProfile.name[0].toUpperCase():'?';
+}
+
+function refreshProfileUI(){
+  if(currentProfile){
+    document.getElementById('profile-avatar-icon').textContent=currentProfile.name?currentProfile.name[0].toUpperCase():'?';
+    document.getElementById('profile-name-display').textContent=currentProfile.name||'User';
+    document.getElementById('profile-username-display').textContent=currentProfile.username||'';
+    document.getElementById('profile-about-display').textContent=currentProfile.about||'';
+    document.getElementById('logout-btn').style.display='block';
+    document.getElementById('signin-profile-btn').style.display='none';
+    loadProfileStats();
+  } else {
+    document.getElementById('profile-avatar-icon').textContent='?';
+    document.getElementById('profile-name-display').textContent='Guest';
+    document.getElementById('profile-username-display').textContent='Sign in to access your profile';
+    document.getElementById('profile-about-display').textContent='';
+    document.getElementById('logout-btn').style.display='none';
+    document.getElementById('signin-profile-btn').style.display='block';
+    ['pstat-added','pstat-reviews'].forEach(id=>document.getElementById(id).textContent='0');
+    document.getElementById('pstat-rating').textContent='—';
+  }
+}
+
+async function loadProfileStats(){
+  if(!currentUser)return;
+  const[{count:added},{data:revData}]=await Promise.all([
+    sb.from('products').select('*',{count:'exact',head:true}).eq('user_id',currentUser.id),
+    sb.from('reviews').select('stars').eq('user_id',currentUser.id)
+  ]);
+  document.getElementById('pstat-added').textContent=added||0;
+  document.getElementById('pstat-reviews').textContent=revData?revData.length:0;
+  if(revData&&revData.length>0){
+    const avg=(revData.reduce((a,r)=>a+r.stars,0)/revData.length).toFixed(1);
+    document.getElementById('pstat-rating').textContent=avg;
+  } else {document.getElementById('pstat-rating').textContent='—';}
+}
+
+// FEED
+async function loadProducts(){
+  document.getElementById('feed').innerHTML='<div class="loading-wrap"><div class="spinner"></div><div class="loading-text">LOADING COLLECTION</div></div>';
+  const{data,error}=await sb.from('products').select('*, reviews(stars)').order('price',{ascending:true});
+  if(error){document.getElementById('feed').innerHTML='<div class="loading-wrap"><div class="loading-text">Could not load products. Check your connection.</div></div>';return;}
+  const emojis=['👗','👘','🩱','🥻','🎀','👒','🩴','👜'];
+  allProducts=(data||[]).map(p=>{
+    const revs=p.reviews||[];
+    const avg=revs.length?parseFloat((revs.reduce((a,r)=>a+r.stars,0)/revs.length).toFixed(1)):0;
+    const emojiIdx=p.id?Math.abs(p.id.charCodeAt(0)-65)%emojis.length:0;
+    return{...p,avgRating:avg,reviewCount:revs.length,emoji:p.emoji||emojis[emojiIdx]};
+  });
+  renderFeed();
+}
+
+function renderFeed(){
+  let list=[...allProducts];
+  list=list.filter(p=>{
+    if(p.price>filters.maxPrice)return false;
+    if(filters.minRating>0&&p.avgRating<filters.minRating)return false;
+    if(filters.style!=='all'&&p.category!==filters.style)return false;
+    if(filters.chip==='top'&&p.avgRating<4.5)return false;
+    if(filters.chip!=='all'&&filters.chip!=='top'){
+      if(!(p.city||'').toLowerCase().includes(filters.chip.toLowerCase())&&!(p.category||'').toLowerCase().includes(filters.chip.toLowerCase()))return false;
+    }
+    const q=filters.search.toLowerCase();
+    if(q&&!(p.name||'').toLowerCase().includes(q)&&!(p.brand||'').toLowerCase().includes(q)&&!(p.city||'').toLowerCase().includes(q))return false;
+    return true;
+  });
+  list.sort((a,b)=>a.price-b.price);
+  const feed=document.getElementById('feed');
+  if(!list.length){
+    feed.innerHTML='<div class="loading-wrap"><div style="font-size:32px">🔍</div><div class="loading-text">NO ITEMS MATCH</div></div>';
+    return;
+  }
+  feed.innerHTML=list.map(p=>`
+    <div class="card" onclick="openDetail('${p.id}')">
+      <div class="card-img">
+        <div class="placeholder-art">${p.emoji}</div>
+        ${p.price<15000?'<div class="card-badge">VALUE</div>':''}
+      </div>
+      <div class="card-body">
+        <div>
+          <div class="card-brand">${p.brand||''}</div>
+          <div class="card-name">${p.name||''}</div>
+          <div class="card-price">${fmt(p.price)}</div>
+        </div>
+        <div class="card-meta">
+          <div class="stars">${starsHTML(p.avgRating)}<span>(${p.reviewCount})</span></div>
+          <div class="card-loc">📍 ${p.city||'—'}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+// DETAIL
+async function openDetail(id){
+  currentProductId=id;
+  const p=allProducts.find(x=>x.id===id);
+  if(!p)return;
+  document.getElementById('detail-header-title').textContent=(p.brand||'').toUpperCase();
+  document.getElementById('detail-brand').textContent=p.brand||'';
+  document.getElementById('detail-name').textContent=p.name||'';
+  document.getElementById('detail-price').textContent=fmt(p.price);
+  document.getElementById('detail-emoji').textContent=p.emoji||'👗';
+  currentMapsLink=p.maps_link||('https://maps.google.com/?q='+encodeURIComponent((p.location||'')+' '+(p.city||'')));
+
+  const{data:revs}=await sb.from('reviews').select('*, profiles(name,username)').eq('product_id',id).order('created_at',{ascending:false});
+  const reviews=revs||[];
+  const avg=reviews.length?parseFloat((reviews.reduce((a,r)=>a+r.stars,0)/reviews.length).toFixed(1)):0;
+  document.getElementById('detail-stars').textContent=starsHTML(avg);
+  document.getElementById('detail-rating-count').textContent=reviews.length?avg.toFixed(1)+' out of 5  ·  '+reviews.length+' review'+(reviews.length!==1?'s':''):'No reviews yet — be the first!';
+  document.getElementById('detail-reviews').innerHTML=reviews.map(r=>`
+    <div class="review-card">
+      <div class="review-top">
+        <span class="reviewer">${r.profiles?.name||'Anonymous'}</span>
+        <span class="review-stars">${starsHTML(r.stars)}</span>
+      </div>
+      <div class="review-text">${r.body||''}</div>
+    </div>`).join('');
+  document.getElementById('detail-location').innerHTML=`<strong>${p.city||''}</strong><br>${p.location||''}`;
+
+  selectedStar=0;
+  document.querySelectorAll('.star-pick').forEach(s=>s.classList.remove('lit'));
+  document.getElementById('review-text').value='';
+  const rf=document.getElementById('review-form-section');
+  document.getElementById('review-nudge')?.remove();
+  if(!currentUser){
+    rf.style.display='none';
+    const nudge=document.createElement('div');
+    nudge.id='review-nudge';
+    nudge.style.cssText='text-align:center;padding:16px;';
+    nudge.innerHTML='<span style="color:var(--gold);cursor:pointer;font-family:Cinzel;font-size:11px;letter-spacing:.1em" onclick="showScreen(\'auth\')">SIGN IN TO LEAVE A REVIEW →</span>';
+    rf.parentNode.insertBefore(nudge,rf);
+  } else {rf.style.display='block';}
+
+  document.getElementById('detail-scroll').scrollTop=0;
+  showScreen('detail');
+}
+
+function openMaps(){window.open(currentMapsLink,'_blank');}
+
+function pickStar(n){
+  selectedStar=n;
+  document.querySelectorAll('.star-pick').forEach((s,i)=>s.classList.toggle('lit',i<n));
+}
+
+async function submitReview(){
+  if(!currentUser){showScreen('auth');return;}
+  if(!selectedStar){showToast('Please select a star rating');return;}
+  const body=document.getElementById('review-text').value.trim();
+  if(!body){showToast('Please write a short review');return;}
+  const btn=document.getElementById('submit-review-btn');
+  btn.disabled=true;btn.textContent='SUBMITTING…';
+  const{error}=await sb.from('reviews').insert({product_id:currentProductId,user_id:currentUser.id,stars:selectedStar,body});
+  btn.disabled=false;btn.textContent='SUBMIT REVIEW';
+  if(error){showToast(error.message);return;}
+  showToast('Review submitted! ✨');
+  await loadProducts();
+  openDetail(currentProductId);
+}
+
+// ADD PRODUCT
+async function submitProduct(){
+  if(!currentUser){showScreen('auth');return;}
+  const brand=document.getElementById('add-brand').value.trim();
+  const name=document.getElementById('add-product').value.trim();
+  const price=parseFloat(document.getElementById('add-price').value);
+  const category=document.getElementById('add-category').value;
+  const city=document.getElementById('add-city').value.trim();
+  const location=document.getElementById('add-location').value.trim();
+  const maps_link=document.getElementById('add-maps').value.trim()||null;
+  if(!brand||!name||!price||!city){showToast('Please fill in required fields');return;}
+  const emojis=['👗','👘','🩱','🥻','🎀','👒','🩴','👜'];
+  const emoji=emojis[Math.floor(Math.random()*emojis.length)];
+  const btn=document.getElementById('add-submit-btn');
+  btn.disabled=true;btn.textContent='SUBMITTING…';
+  const{error}=await sb.from('products').insert({user_id:currentUser.id,brand,name,price,category,city,location,maps_link,emoji});
+  btn.disabled=false;btn.textContent='SUBMIT TO COLLECTION';
+  if(error){showToast(error.message);return;}
+  ['add-brand','add-product','add-price','add-city','add-location','add-maps'].forEach(id=>document.getElementById(id).value='');
+  showToast('Product added to the collection! ✨');
+  await loadProducts();
+  showScreen('home');
+}
+
+// FILTERS
+function filterFeed(){filters.search=document.getElementById('search-input').value;renderFeed();}
+function filterChip(el,val){document.querySelectorAll('#brand-chips .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');filters.chip=val;renderFeed();}
+function setChipGroup(el,groupId){document.querySelectorAll('#'+groupId+' .chip').forEach(c=>c.classList.remove('active'));el.classList.add('active');}
+function openDrawer(){document.getElementById('drawer-overlay').classList.add('open');}
+function closeDrawer(){document.getElementById('drawer-overlay').classList.remove('open');}
+function applyFilters(){filters.maxPrice=parseInt(document.getElementById('price-range').value);closeDrawer();renderFeed();}
+
+// INIT
+sb.auth.onAuthStateChange(async(event,session)=>{
+  currentUser=session?.user||null;
+  if(currentUser){
+    await loadProfile(currentUser.id);
+    document.getElementById('gate-banner').style.display='none';
+  } else {
+    currentProfile=null;
+    refreshProfileUI();refreshHeaderAvatar();
+    document.getElementById('gate-banner').style.display='flex';
+  }
+});
+
+(async()=>{
+  const{data:{session}}=await sb.auth.getSession();
+  currentUser=session?.user||null;
+  if(currentUser)await loadProfile(currentUser.id);
+  else document.getElementById('gate-banner').style.display='flex';
+  await loadProducts();
+})();
+</script>
+</body>
+</html>
